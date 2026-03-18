@@ -1,0 +1,1899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>LocaLoss</title>
+
+<script>
+  window.tailwind = {
+    config: {
+      theme: {
+        extend: {
+          fontSize: {
+            'xxs':  ['0.625rem', { lineHeight: '0.875rem' }],
+            'xxxs': ['0.5rem',   { lineHeight: '0.75rem'  }],
+          }
+        }
+      }
+    }
+  }
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ── Suite Drum ───────────────────────────────────────── */
+.suite-drum-wrap {
+  height: 44px; overflow: hidden; display: inline-block; vertical-align: middle;
+  position: relative;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 78%, transparent 100%);
+  mask-image:         linear-gradient(to bottom, transparent 0%, #000 22%, #000 78%, transparent 100%);
+}
+.suite-drum { position: relative; transition: transform 0.52s cubic-bezier(0.4,0,0.2,1); will-change: transform; }
+.suite-face { display: block; height: 44px; line-height: 44px; white-space: nowrap;
+  font-family: 'Space Mono','Courier New',monospace; font-size: 28px; font-weight: 700; color: #F43F5E; }
+
+/* ── Suite Launcher Panel ─────────────────────────────── */
+#suiteLauncher {
+  background: rgba(15,17,26,0.97);
+  border-bottom: 1px solid rgba(244,63,94,0.18);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.suite-module-btn {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  border-radius: 10px; border: 1px solid transparent;
+  background: rgba(255,255,255,0.03); cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  text-align: left; width: 100%;
+}
+.suite-module-btn:active { transform: scale(0.97); }
+.suite-module-btn.active {
+  background: rgba(244,63,94,0.14);
+  border-color: rgba(244,63,94,0.38);
+}
+.suite-module-btn:not(.active):hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.08);
+}
+.suite-module-icon {
+  width: 34px; height: 34px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+/* ── Preview Page ─────────────────────────────────────── */
+.preview-badge {
+  display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px;
+  border-radius: 999px; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+}
+@keyframes previewPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.preview-pulse { animation: previewPulse 2.4s ease-in-out infinite; }
+.preview-feature-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 13px; color: #d1d5db;
+}
+.preview-feature-item:last-child { border-bottom: none; }
+
+/* ── Floating Labels ──────────────────────────────────── */
+.float-wrap { position: relative; }
+.float-input {
+  width: 100%; padding: 20px 12px 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px; color: #f1f5f9;
+  font-family: 'Space Mono',monospace; font-size: 14px;
+  transition: border-color 0.15s;
+  -webkit-appearance: none; appearance: none;
+}
+.float-input:focus { outline: none; border-color: #F43F5E; }
+.float-label {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 14px; color: #64748b;
+  pointer-events: none; transition: all 0.15s ease;
+  font-family: 'Space Mono',monospace;
+}
+.float-label.active { top: 8px; transform: none; font-size: 10px; color: #F43F5E; }
+.float-input.has-value ~ .float-label,
+.float-input:focus ~ .float-label { top: 8px; transform: none; font-size: 10px; color: #F43F5E; }
+
+/* ── Category Chip ────────────────────────────────────── */
+.cat-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;
+  font-family: 'Space Mono',monospace;
+}
+
+/* ── Amount Input (big) ───────────────────────────────── */
+.amount-input-wrap { position: relative; }
+.amount-prefix {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  font-size: 28px; font-weight: 700; color: #F43F5E;
+  font-family: 'Space Mono',monospace; pointer-events: none;
+}
+#amountInput {
+  width: 100%; padding: 16px 14px 16px 36px;
+  background: rgba(244,63,94,0.06);
+  border: 2px solid rgba(244,63,94,0.3);
+  border-radius: 14px; color: #f8fafc;
+  font-family: 'Space Mono',monospace; font-size: 32px; font-weight: 700;
+  text-align: left;
+  -webkit-appearance: none; appearance: none;
+  transition: border-color 0.15s;
+}
+#amountInput:focus { outline: none; border-color: #F43F5E; }
+#amountInput::placeholder { color: rgba(244,63,94,0.3); }
+
+/* ── Recurring toggle ─────────────────────────────────── */
+.recur-freq-btn {
+  padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  color: #94a3b8; cursor: pointer; font-family: 'Space Mono',monospace;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.recur-freq-btn.active {
+  background: rgba(244,63,94,0.2); border-color: rgba(244,63,94,0.5); color: #fda4af;
+}
+
+/* ── History Cards ────────────────────────────────────── */
+.expense-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer; transition: background 0.12s;
+  margin-bottom: 6px;
+}
+.expense-card:active { background: rgba(255,255,255,0.07); }
+.expense-card.deleted { opacity: 0.4; }
+
+/* ── Bill Cards ───────────────────────────────────────── */
+.bill-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 6px;
+}
+.bill-due-soon { border-color: rgba(244,63,94,0.35); background: rgba(244,63,94,0.06); }
+
+/* ── Settings rows ────────────────────────────────────── */
+.settings-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px; border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 6px;
+}
+
+/* ── Color picker swatch ──────────────────────────────── */
+input[type="color"] {
+  width: 34px; height: 34px; border-radius: 8px; border: none; cursor: pointer;
+  padding: 2px; background: transparent;
+}
+
+/* ── Toast ────────────────────────────────────────────── */
+#toast {
+  position: fixed; bottom: calc(5rem + env(safe-area-inset-bottom,0px));
+  right: 1rem; z-index: 9999;
+  background: #1e293b; border: 1px solid rgba(244,63,94,0.3);
+  color: #f1f5f9; padding: 10px 16px; border-radius: 10px;
+  font-size: 12px; font-family: 'Space Mono',monospace;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+}
+#toast.hidden { opacity: 0; transform: translateY(8px); }
+
+/* ── Sheet & overlay ──────────────────────────────────── */
+#overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 40; }
+#sheet {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: #111827; border-radius: 20px 20px 0 0;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom,0px));
+  max-height: 90vh; overflow-y: auto; z-index: 50;
+}
+</style>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#111827" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+</head>
+
+<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col" style="font-family:'Space Mono',monospace;touch-action:manipulation;overscroll-behavior:none;">
+
+<!-- ═══════════════════════════════════════════════════════════ HEADER -->
+<header class="px-4 py-4 border-b border-gray-800 sticky top-0 bg-gray-900/80 backdrop-blur-sm z-20 pt-14 flex justify-between items-center relative">
+
+  <!-- Suite Launch Button -->
+  <button id="suiteLaunchBtn" onclick="toggleSuiteLauncher()" class="flex items-center gap-0 cursor-pointer select-none" style="background:none;border:none;padding:0" aria-label="Open LocaLedger Suite">
+    <svg width="40" height="44" viewBox="0 0 20 22" fill="none" style="flex-shrink:0;margin-right:8px">
+      <defs>
+        <filter id="hgR" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="hgY" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="hgI" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <line x1="4" y1="7.5" x2="4" y2="10"  stroke="#334155" stroke-width="1.5"/>
+      <line x1="4" y1="12"  x2="4" y2="14.5" stroke="#334155" stroke-width="1.5"/>
+      <circle cx="4" cy="4"  r="2.5" fill="#22C55E" filter="url(#hgR)"/>
+      <rect x="8.5" y="2.75"  width="9"  height="2.5" rx="1.25" fill="#334155"/>
+      <circle cx="4" cy="11" r="2.5" fill="#F43F5E" filter="url(#hgY)"/>
+      <rect x="8.5" y="9.75"  width="12" height="2.5" rx="1.25" fill="#334155"/>
+      <circle cx="4" cy="18" r="2.5" fill="#6366F1" filter="url(#hgI)"/>
+      <rect x="8.5" y="16.75" width="7"  height="2.5" rx="1.25" fill="#334155"/>
+    </svg>
+
+    <span style="font-family:'Space Mono','Courier New',monospace;font-size:28px;font-weight:700;color:#F8FAFC;line-height:1">Loca</span>
+
+    <div class="suite-drum-wrap">
+      <div id="suiteDrum" class="suite-drum">
+        <span class="suite-face">Labor</span>
+        <span class="suite-face">Loss</span>
+        <span class="suite-face">Limit</span>
+        <span class="suite-face">Loan</span>
+        <span class="suite-face">Legacy</span>
+        <span class="suite-face">Liquid</span>
+        <span class="suite-face">Labor</span>
+      </div>
+    </div>
+
+    <svg id="suiteChevron" width="12" height="12" viewBox="0 0 12 12" fill="none" style="margin-left:2px;transition:transform 0.25s;flex-shrink:0">
+      <path d="M2.5 4.5L6 8l3.5-3.5" stroke="#F43F5E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <!-- Suite Launcher Panel -->
+  <div id="suiteLauncher" class="hidden absolute top-full left-0 right-0 z-50" style="border-top:1px solid rgba(244,63,94,0.12)">
+    <div class="px-4 pt-3 pb-4">
+      <div class="flex items-center justify-between mb-3">
+        <span style="font-family:'Space Mono',monospace;font-size:10px;font-weight:700;color:#475569;letter-spacing:0.1em;text-transform:uppercase">LocaLedger Suite</span>
+        <button onclick="closeSuiteLauncher()" style="color:#475569;font-size:18px;line-height:1;background:none;border:none;cursor:pointer;padding:2px 6px">×</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+
+        <!-- LocaLabor -->
+        <button id="suiteBtn-labor" class="suite-module-btn" onclick="switchSuiteModule('labor')">
+          <div class="suite-module-icon" style="background:rgba(99,102,241,0.18);border:1px solid rgba(99,102,241,0.35)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:700;color:#f1f5f9;font-family:'Space Mono',monospace">LocaLabor</div>
+            <div style="font-size:10px;color:#818cf8;margin-top:1px">Income Tracking</div>
+          </div>
+          <span style="font-size:9px;font-weight:700;background:#6366F1;color:#fff;padding:2px 6px;border-radius:999px;letter-spacing:0.06em;flex-shrink:0">LIVE</span>
+        </button>
+
+        <!-- LocaLoss (active) -->
+        <button id="suiteBtn-loss" class="suite-module-btn active" onclick="switchSuiteModule('loss')">
+          <div class="suite-module-icon" style="background:rgba(244,63,94,0.18);border:1px solid rgba(244,63,94,0.35)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#F43F5E" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:700;color:#f1f5f9;font-family:'Space Mono',monospace">LocaLoss</div>
+            <div style="font-size:10px;color:#fb7185;margin-top:1px">Spending Tracker</div>
+          </div>
+          <span style="font-size:9px;font-weight:700;background:#F43F5E;color:#fff;padding:2px 6px;border-radius:999px;letter-spacing:0.06em;flex-shrink:0">LIVE</span>
+        </button>
+
+        <!-- LocaLimit -->
+        <button id="suiteBtn-limit" class="suite-module-btn" onclick="switchSuiteModule('limit')">
+          <div class="suite-module-icon" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:700;color:#f1f5f9;font-family:'Space Mono',monospace">LocaLimit</div>
+            <div style="font-size:10px;color:#fbbf24;margin-top:1px">Budget Intel</div>
+          </div>
+          <span style="font-size:9px;font-weight:700;background:rgba(245,158,11,0.2);color:#fcd34d;padding:2px 6px;border-radius:999px;letter-spacing:0.06em;flex-shrink:0">SOON</span>
+        </button>
+
+        <!-- LocaLoan -->
+        <button id="suiteBtn-loan" class="suite-module-btn" onclick="switchSuiteModule('loan')">
+          <div class="suite-module-icon" style="background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.25)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:700;color:#f1f5f9;font-family:'Space Mono',monospace">LocaLoan</div>
+            <div style="font-size:10px;color:#fb923c;margin-top:1px">Loan Optimizer</div>
+          </div>
+          <span style="font-size:9px;font-weight:700;background:rgba(249,115,22,0.2);color:#fdba74;padding:2px 6px;border-radius:999px;letter-spacing:0.06em;flex-shrink:0">SOON</span>
+        </button>
+
+        <!-- LocaLegacy -->
+        <button id="suiteBtn-legacy" class="suite-module-btn" onclick="switchSuiteModule('legacy')">
+          <div class="suite-module-icon" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.25)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:700;color:#f1f5f9;font-family:'Space Mono',monospace">LocaLegacy</div>
+            <div style="font-size:10px;color:#34d399;margin-top:1px">Investment Tracker</div>
+          </div>
+          <span style="font-size:9px;font-weight:700;background:rgba(16,185,129,0.2);color:#6ee7b7;padding:2px 6px;border-radius:999px;letter-spacing:0.06em;flex-shrink:0">SOON</span>
+        </button>
+
+        <!-- LocaLiquid -->
+        <button id="suiteBtn-liquid" class="suite-module-btn" onclick="switchSuiteModule('liquid')">
+          <div class="suite-module-icon" style="background:rgba(6,182,212,0.12);border:1px solid rgba(6,182,212,0.25)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" stroke-width="2"><path d="M12 2c0 0-8 6.5-8 12a8 8 0 0016 0c0-5.5-8-12-8-12z"/></svg>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:700;color:#f1f5f9;font-family:'Space Mono',monospace">LocaLiquid</div>
+            <div style="font-size:10px;color:#22d3ee;margin-top:1px">Net Worth Engine</div>
+          </div>
+          <span style="font-size:9px;font-weight:700;background:rgba(6,182,212,0.2);color:#67e8f9;padding:2px 6px;border-radius:999px;letter-spacing:0.06em;flex-shrink:0">SOON</span>
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings button (unique to LocaLoss) -->
+  <button data-tab="settings" class="tab p-2 text-gray-400" aria-label="Settings">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  </button>
+</header>
+
+<main id="app" class="flex-1 overflow-y-auto pb-40"></main>
+
+<!-- Period Banner -->
+<div id="monthlyBanner" class="fixed bottom-16 inset-x-0 bg-gray-900 border-t border-gray-800 px-4 py-3">
+  <button id="monthlyBannerButton" class="w-full flex justify-between items-center" onclick="showDateFilterMenu()">
+    <div class="text-center flex-1">
+      <div class="flex items-center justify-center gap-2 flex-wrap">
+        <span id="filterIndicator" class="text-xs" style="color:#F43F5E">▼</span>
+        <span id="dateFilterLabel" class="text-xs text-gray-400 uppercase">This Month</span>
+      </div>
+      <div id="monthlyBannerValue" class="text-xl font-bold pb-3" style="color:#fda4af">$0.00</div>
+    </div>
+    <svg id="filterArrow" class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+    </svg>
+  </button>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="fixed bottom-0 inset-x-0 bg-gray-900 border-t border-gray-800 flex text-xs pb-2" id="bottomNav">
+  <button data-tab="dashboard" class="tab flex-1 py-3 text-center text-gray-400">
+    <div class="flex flex-col items-center gap-1">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+      </svg>
+      <span>Dashboard</span>
+    </div>
+  </button>
+
+  <button data-tab="add" class="tab flex-1 py-3 text-center text-gray-400">
+    <div class="flex flex-col items-center gap-1">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M12 4v16m8-8H4"/>
+      </svg>
+      <span>Add</span>
+    </div>
+  </button>
+
+  <button data-tab="history" class="tab flex-1 py-3 text-center text-gray-400">
+    <div class="flex flex-col items-center gap-1">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+      <span>History</span>
+    </div>
+  </button>
+</nav>
+
+<div id="toast" class="hidden"></div>
+<div id="overlay" class="hidden" onclick="closeSheet()"></div>
+<div id="sheet" class="hidden"></div>
+
+<script src="offline-charts.js"></script>
+<script>
+/* ════════════════════════════════════════════════════════════
+   LOCALOSS — Spending Tracker
+   LocaLedger Suite · Rose #F43F5E · localStorage: locaLossData
+════════════════════════════════════════════════════════════ */
+
+const DATA_KEY    = "locaLossData";
+const META_KEY    = "locaLossMeta";
+const APP_VERSION = "1.0.0";
+const ROSE        = "#F43F5E";
+
+/* ── Default categories ──────────────────────────────────── */
+const DEFAULT_CATEGORIES = [
+  { key: "food",          label: "Food & Dining",    color: "#F43F5E", budget: 400  },
+  { key: "transport",     label: "Transport",         color: "#F97316", budget: 200  },
+  { key: "housing",       label: "Housing",           color: "#8B5CF6", budget: 1500 },
+  { key: "entertainment", label: "Entertainment",     color: "#06B6D4", budget: 100  },
+  { key: "health",        label: "Health",            color: "#10B981", budget: 150  },
+  { key: "shopping",      label: "Shopping",          color: "#EAB308", budget: 200  },
+  { key: "utilities",     label: "Utilities",         color: "#94A3B8", budget: 200  },
+  { key: "other",         label: "Other",             color: "#64748B", budget: 0    },
+];
+
+/* ── Global State ────────────────────────────────────────── */
+let activeTab         = "dashboard";
+let showDeleted       = false;
+let loadedMonths      = 2;
+let allExpenses       = [];
+let savedFormData     = null;
+let editModeExpense   = null;
+let isScrollLoad      = false;
+let skipNextFormSave  = false;
+let dateFilter        = { type: "month" };
+let historyFilters    = { category: "", search: "" };
+let historySort       = { type: "date", direction: "desc" };
+let _recurringEnabled = false;
+let _recurringFreq    = 30;
+
+/* ── Storage ─────────────────────────────────────────────── */
+function initStorage() {
+  if (!localStorage.getItem(DATA_KEY)) {
+    localStorage.setItem(DATA_KEY, JSON.stringify({
+      expenses: [],
+      categories: DEFAULT_CATEGORIES.map(c => ({ ...c })),
+      recurringBills: [],
+      version: 1
+    }));
+  }
+  if (!localStorage.getItem(META_KEY)) {
+    localStorage.setItem(META_KEY, JSON.stringify({ userId: "user1", nextId: 1 }));
+  }
+}
+initStorage();
+
+function loadData()  { return JSON.parse(localStorage.getItem(DATA_KEY)); }
+function saveData(d) { localStorage.setItem(DATA_KEY, JSON.stringify(d)); }
+function loadMeta()  { return JSON.parse(localStorage.getItem(META_KEY)); }
+function saveMeta(m) { localStorage.setItem(META_KEY, JSON.stringify(m)); }
+
+function generateId() {
+  const m = loadMeta();
+  const id = `loss_${m.userId}_${m.nextId}`;
+  m.nextId++;
+  saveMeta(m);
+  return id;
+}
+
+/* ── Helpers ─────────────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function money(v) { return `$${Number(v||0).toFixed(2)}`; }
+
+function showToast(msg, ms = 2200) {
+  const t = $('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  clearTimeout(showToast._tid);
+  showToast._tid = setTimeout(() => t.classList.add('hidden'), ms);
+}
+
+function getCatByKey(key) {
+  const data = loadData();
+  return (data.categories || []).find(c => c.key === key) || { key, label: key || 'Other', color: '#64748B' };
+}
+
+function catChipHtml(key, size = 'sm') {
+  const cat = getCatByKey(key);
+  const fs = size === 'sm' ? '10px' : '11px';
+  const bg = hexToRgba(cat.color, 0.18);
+  return `<span class="cat-chip" style="background:${bg};color:${cat.color};border:1px solid ${hexToRgba(cat.color,0.3)};font-size:${fs}">${cat.label}</span>`;
+}
+
+function hexToRgba(hex, alpha) {
+  if (!hex) return `rgba(100,116,139,${alpha})`;
+  const h = hex.replace('#','');
+  const r = parseInt(h.substring(0,2),16);
+  const g = parseInt(h.substring(2,4),16);
+  const b = parseInt(h.substring(4,6),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function openSheet() { $('sheet').classList.remove('hidden'); $('overlay').classList.remove('hidden'); }
+function closeSheet() { $('sheet').classList.add('hidden'); $('overlay').classList.add('hidden'); }
+
+/* ── Date filter logic ───────────────────────────────────── */
+function getFilteredExpenses(expenses) {
+  if (!expenses) return [];
+  const nonDel = showDeleted ? expenses : expenses.filter(e => !e.deleted);
+  const today  = new Date();
+  const yr     = today.getFullYear();
+  const mo     = today.getMonth();
+
+  let s, en;
+  if (dateFilter.type === 'all')    return nonDel;
+  if (dateFilter.type === 'week') {
+    const day = today.getDay();
+    const mon = new Date(today); mon.setDate(today.getDate() - day + (day === 0 ? -6 : 1));
+    s  = mon.toISOString().split('T')[0];
+    en = today.toISOString().split('T')[0];
+  } else if (dateFilter.type === 'month') {
+    s  = new Date(yr, mo, 1).toISOString().split('T')[0];
+    en = new Date(yr, mo+1, 0).toISOString().split('T')[0];
+  } else if (dateFilter.type === 'ytd') {
+    s  = new Date(yr, 0, 1).toISOString().split('T')[0];
+    en = today.toISOString().split('T')[0];
+  } else if (dateFilter.type === 'past3months') {
+    s  = new Date(yr, mo-3, 1).toISOString().split('T')[0];
+    en = today.toISOString().split('T')[0];
+  } else if (dateFilter.type === 'range') {
+    s  = dateFilter.startDate;
+    en = dateFilter.endDate;
+  }
+  return s && en ? nonDel.filter(e => e.date >= s && e.date <= en) : nonDel;
+}
+
+function setDateFilter(type, start, end, label) {
+  dateFilter = { type, startDate: start || null, endDate: end || null };
+  const lblEl = $('dateFilterLabel');
+  if (lblEl) lblEl.textContent = label || type;
+  const fEl = $('filterIndicator');
+  if (fEl) fEl.textContent = type === 'all' ? '∞' : '▼';
+  updateBannerTotal();
+  if (activeTab === 'dashboard') renderDashboard();
+  else if (activeTab === 'history') renderHistory();
+  closeSheet();
+}
+
+function updateBannerTotal() {
+  const data     = loadData();
+  const filtered = getFilteredExpenses(data.expenses || []);
+  const total    = filtered.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  const el       = $('monthlyBannerValue');
+  if (el) el.textContent = money(total);
+}
+
+/* ── Tab Switching ───────────────────────────────────────── */
+function switchTab(tab) {
+  if (tab !== 'add' && !skipNextFormSave && activeTab === 'add') {
+    savedFormData = readFormData();
+  }
+  skipNextFormSave = false;
+  activeTab = tab;
+
+  document.querySelectorAll('.tab[data-tab]').forEach(btn => {
+    const active = btn.dataset.tab === tab;
+    btn.style.color = active ? ROSE : '';
+  });
+
+  if (tab === 'dashboard') renderDashboard();
+  else if (tab === 'add')  renderAdd(editModeExpense);
+  else if (tab === 'history') { loadedMonths = 2; renderHistory(); }
+  else if (tab === 'settings') renderSettings();
+}
+
+/* ════════════════════════════════════════════════════════════
+   DASHBOARD
+════════════════════════════════════════════════════════════ */
+function renderDashboard() {
+  const data     = loadData();
+  const filtered = getFilteredExpenses(data.expenses || []);
+  const cats     = data.categories || [];
+  const bills    = (data.recurringBills || []).filter(b => b.active !== false);
+
+  const totalSpent  = filtered.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  const expCount    = filtered.length;
+  const days        = Math.max(1, _periodDays());
+  const avgDay      = totalSpent / days;
+
+  // category breakdown
+  const catTotals = {};
+  filtered.forEach(e => {
+    const k = e.category || 'other';
+    catTotals[k] = (catTotals[k] || 0) + (parseFloat(e.amount)||0);
+  });
+  const catSorted = Object.entries(catTotals).sort((a,b) => b[1]-a[1]).slice(0,5);
+
+  // upcoming bills (next 7 days)
+  const todayD  = new Date();
+  const todayN  = todayD.getDate();
+  const upBills = bills.filter(b => {
+    const diff = ((b.dueDay - todayN) % 31 + 31) % 31;
+    return diff <= 7;
+  }).sort((a,b) => {
+    const da = ((a.dueDay - todayN) % 31 + 31) % 31;
+    const db = ((b.dueDay - todayN) % 31 + 31) % 31;
+    return da - db;
+  });
+
+  // chart controls
+  const chartCtrl = typeof renderChartControls === 'function' ? renderChartControls() : '';
+
+  $('app').innerHTML = `
+    <div class="px-4 py-4 space-y-4">
+
+      <!-- Stats row -->
+      <div class="grid grid-cols-3 gap-2">
+        <div class="rounded-xl p-3 text-center" style="background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.2)">
+          <div class="text-xs text-gray-500 mb-1">Spent</div>
+          <div class="text-base font-bold" style="color:#fda4af">${money(totalSpent)}</div>
+        </div>
+        <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07)">
+          <div class="text-xs text-gray-500 mb-1">Entries</div>
+          <div class="text-base font-bold text-gray-200">${expCount}</div>
+        </div>
+        <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07)">
+          <div class="text-xs text-gray-500 mb-1">Avg/Day</div>
+          <div class="text-base font-bold text-gray-200">${money(avgDay)}</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="rounded-xl p-4" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07)">
+        <div class="text-xs text-gray-500 uppercase tracking-widest mb-3" style="font-family:'Space Mono',monospace;letter-spacing:0.1em">Spending Charts</div>
+        ${chartCtrl}
+        <div id="lossCategoryChart"></div>
+        <div id="lossMerchantChart" style="display:none"></div>
+        <div id="lossTrendChart"    style="display:none"></div>
+      </div>
+
+      <!-- Category breakdown mini -->
+      ${catSorted.length ? `
+      <div class="rounded-xl p-4" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07)">
+        <div class="text-xs text-gray-500 uppercase tracking-widest mb-3" style="font-family:'Space Mono',monospace;letter-spacing:0.1em">By Category</div>
+        ${catSorted.map(([key, val]) => {
+          const cat   = cats.find(c => c.key === key) || { label: key, color: '#64748B', budget: 0 };
+          const pct   = totalSpent ? ((val/totalSpent)*100).toFixed(0) : 0;
+          const budget = parseFloat(cat.budget) || 0;
+          const over   = budget > 0 && val > budget;
+          return `
+            <div class="flex items-center gap-3 mb-2">
+              <span style="width:8px;height:8px;border-radius:50%;background:${cat.color};flex-shrink:0;display:inline-block"></span>
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="text-gray-300 truncate">${cat.label}</span>
+                  <span class="${over ? 'text-rose-400' : 'text-gray-400'}">${money(val)}${budget > 0 ? ` / ${money(budget)}` : ''}</span>
+                </div>
+                <div class="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full" style="width:${pct}%;background:${cat.color};opacity:${over ? 1 : 0.75}"></div>
+                </div>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>` : ''}
+
+      <!-- Upcoming bills -->
+      ${upBills.length ? `
+      <div class="rounded-xl p-4" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07)">
+        <div class="text-xs text-gray-500 uppercase tracking-widest mb-3" style="font-family:'Space Mono',monospace;letter-spacing:0.1em">Bills Due Soon</div>
+        ${upBills.map(b => {
+          const diff = ((b.dueDay - todayN) % 31 + 31) % 31;
+          const cat  = cats.find(c => c.key === b.category) || { color: '#64748B' };
+          const due  = diff === 0 ? 'Due today' : diff === 1 ? 'Due tomorrow' : `Due in ${diff} days`;
+          return `
+            <div class="bill-card ${diff <= 2 ? 'bill-due-soon' : ''}">
+              <div style="width:8px;height:8px;border-radius:50%;background:${cat.color};flex-shrink:0"></div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-bold text-gray-200 truncate">${b.label}</div>
+                <div class="text-xs text-gray-500">${due}</div>
+              </div>
+              <div class="text-sm font-bold ${diff <= 2 ? 'text-rose-400' : 'text-gray-300'}">${money(b.amount)}</div>
+            </div>`;
+        }).join('')}
+      </div>` : ''}
+
+      <!-- No data cta -->
+      ${expCount === 0 ? `
+      <div class="rounded-xl p-6 text-center" style="background:rgba(244,63,94,0.05);border:1px dashed rgba(244,63,94,0.2)">
+        <div class="text-3xl mb-2">💸</div>
+        <div class="text-sm text-gray-400 mb-4">No expenses logged for this period.</div>
+        <button onclick="switchTab('add')" class="px-5 py-2.5 rounded-xl text-sm font-bold text-white" style="background:${ROSE};font-family:'Space Mono',monospace">Log first expense</button>
+      </div>` : ''}
+
+    </div>`;
+
+  updateBannerTotal();
+  if (typeof renderAllCharts === 'function') setTimeout(renderAllCharts, 30);
+}
+
+function _periodDays() {
+  const today = new Date();
+  if (dateFilter.type === 'week')  return 7;
+  if (dateFilter.type === 'month') return new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+  if (dateFilter.type === 'ytd')   return Math.ceil((today - new Date(today.getFullYear(),0,1)) / 86400000) + 1;
+  if (dateFilter.type === 'range' && dateFilter.startDate && dateFilter.endDate) {
+    return Math.max(1, Math.ceil((new Date(dateFilter.endDate) - new Date(dateFilter.startDate)) / 86400000) + 1);
+  }
+  return 30;
+}
+
+/* ════════════════════════════════════════════════════════════
+   ADD / EDIT EXPENSE FORM
+════════════════════════════════════════════════════════════ */
+function renderAdd(existing) {
+  const data = loadData();
+  const cats = data.categories || [];
+  const isEdit = !!existing;
+
+  // Pre-fill from savedFormData or existing record
+  const pf = isEdit ? existing : (savedFormData || {});
+  const fDate       = pf.date       || todayISO();
+  const fAmount     = isEdit ? (existing.amount || '') : (pf.amount || '');
+  const fCategory   = isEdit ? (existing.category || '') : (pf.category || (cats[0]?.key || ''));
+  const fMerchant   = isEdit ? (existing.merchant || '') : (pf.merchant || '');
+  const fNotes      = isEdit ? (existing.notes    || '') : (pf.notes    || '');
+  const fRecurring  = isEdit ? !!existing.recurring : !!pf.recurring;
+  const fRecurFreq  = isEdit ? (existing.recurringFreq || 30) : (pf.recurringFreq || 30);
+
+  if (!isEdit) {
+    _recurringEnabled = fRecurring;
+    _recurringFreq    = fRecurFreq;
+  }
+
+  const catOptions = cats.map(c =>
+    `<option value="${c.key}" ${fCategory === c.key ? 'selected' : ''}>${c.label}</option>`
+  ).join('');
+
+  const freqBtns = [7,14,30,91].map(d => {
+    const lbl = d===7?'Weekly':d===14?'Bi-weekly':d===30?'Monthly':'Quarterly';
+    return `<button type="button" class="recur-freq-btn ${_recurringFreq===d&&_recurringEnabled?'active':''}" onclick="setRecurFreq(${d})">${lbl}</button>`;
+  }).join('');
+
+  $('app').innerHTML = `
+    <div class="px-4 py-4">
+
+      <div class="text-xs text-gray-500 uppercase tracking-widest mb-4" style="font-family:'Space Mono',monospace;letter-spacing:0.1em">
+        ${isEdit ? 'Edit Expense' : 'Log Expense'}
+      </div>
+
+      <form id="expenseForm" onsubmit="saveExpense(event)">
+
+        <!-- Amount -->
+        <div class="amount-input-wrap mb-4">
+          <span class="amount-prefix">$</span>
+          <input id="amountInput" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00"
+            value="${fAmount}" autocomplete="off" required />
+        </div>
+
+        <!-- Category -->
+        <div class="float-wrap mb-3">
+          <select id="categoryInput" class="float-input ${fCategory ? 'has-value' : ''}"
+            onchange="updateLabel('categoryLabel')" style="padding-top:20px">
+            ${catOptions}
+          </select>
+          <label id="categoryLabel" class="float-label ${fCategory ? 'active' : ''}">Category</label>
+        </div>
+
+        <!-- Merchant -->
+        <div class="float-wrap mb-3">
+          <input id="merchantInput" type="text" class="float-input ${fMerchant ? 'has-value' : ''}"
+            placeholder="" value="${fMerchant}" oninput="updateLabel('merchantLabel')" autocomplete="off" />
+          <label id="merchantLabel" class="float-label ${fMerchant ? 'active' : ''}">Merchant / Description</label>
+        </div>
+
+        <!-- Date -->
+        <div class="float-wrap mb-3">
+          <input id="dateInput" type="date" class="float-input has-value"
+            value="${fDate}" onchange="updateLabel('dateLabel')" />
+          <label id="dateLabel" class="float-label active">Date</label>
+        </div>
+
+        <!-- Notes -->
+        <div class="float-wrap mb-4">
+          <textarea id="notesInput" class="float-input ${fNotes ? 'has-value' : ''}" rows="2"
+            placeholder="" oninput="updateLabel('notesLabel')" style="padding-top:22px;resize:none">${fNotes}</textarea>
+          <label id="notesLabel" class="float-label ${fNotes ? 'active' : ''}">Notes (optional)</label>
+        </div>
+
+        <!-- Recurring toggle -->
+        <div class="rounded-xl p-3 mb-4" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm text-gray-300">Recurring</span>
+            <button type="button" onclick="toggleRecurring()"
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
+              style="background:${_recurringEnabled ? ROSE : '#374151'}" id="recurToggleBtn">
+              <span class="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform"
+                style="transform:translateX(${_recurringEnabled ? '20px' : '4px'})"></span>
+            </button>
+          </div>
+          <div id="recurOptions" class="${_recurringEnabled ? '' : 'hidden'}">
+            <div class="flex flex-wrap gap-2">
+              ${freqBtns}
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="w-full py-3 rounded-xl text-sm font-bold text-white mb-3"
+          style="background:${ROSE};font-family:'Space Mono',monospace">
+          ${isEdit ? 'Save Changes' : 'Save Expense'}
+        </button>
+
+        ${isEdit ? `
+        <button type="button" onclick="cancelEdit()"
+          class="w-full py-3 rounded-xl text-sm font-bold text-gray-400"
+          style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);font-family:'Space Mono',monospace">
+          Cancel
+        </button>` : ''}
+
+      </form>
+    </div>`;
+
+  // Focus amount input
+  setTimeout(() => { const a = $('amountInput'); if (a && !isEdit) a.focus(); }, 80);
+}
+
+function readFormData() {
+  const a  = $('amountInput');
+  const ca = $('categoryInput');
+  const m  = $('merchantInput');
+  const d  = $('dateInput');
+  const n  = $('notesInput');
+  if (!a) return null;
+  return {
+    amount:       a.value,
+    category:     ca?.value || '',
+    merchant:     m?.value  || '',
+    date:         d?.value  || todayISO(),
+    notes:        n?.value  || '',
+    recurring:    _recurringEnabled,
+    recurringFreq: _recurringFreq,
+  };
+}
+
+function saveExpense(e) {
+  e.preventDefault();
+  const fd = readFormData();
+  if (!fd || !fd.amount || parseFloat(fd.amount) <= 0) {
+    showToast('Enter an amount first'); return;
+  }
+
+  const data = loadData();
+  const now  = Date.now();
+
+  if (editModeExpense) {
+    // Update existing
+    const idx = data.expenses.findIndex(x => x.id === editModeExpense.id && x.createdAt === editModeExpense.createdAt);
+    if (idx >= 0) {
+      data.expenses[idx] = {
+        ...data.expenses[idx],
+        amount:       parseFloat(fd.amount),
+        category:     fd.category,
+        merchant:     fd.merchant.trim(),
+        date:         fd.date,
+        notes:        fd.notes.trim(),
+        recurring:    fd.recurring,
+        recurringFreq: fd.recurringFreq,
+        updatedAt:    now,
+      };
+    }
+    editModeExpense = null;
+    updateBottomNavNormal();
+    showToast('Expense updated');
+  } else {
+    // New expense
+    const rec = {
+      id:           generateId(),
+      date:         fd.date,
+      amount:       parseFloat(fd.amount),
+      category:     fd.category,
+      merchant:     fd.merchant.trim(),
+      notes:        fd.notes.trim(),
+      recurring:    fd.recurring,
+      recurringFreq: fd.recurring ? fd.recurringFreq : undefined,
+      deleted:      false,
+      createdAt:    now,
+      updatedAt:    now,
+    };
+    data.expenses.push(rec);
+    showToast('Expense saved');
+  }
+
+  saveData(data);
+  savedFormData     = null;
+  skipNextFormSave  = true;
+  _recurringEnabled = false;
+  switchTab('history');
+}
+
+function cancelEdit() {
+  editModeExpense = null;
+  updateBottomNavNormal();
+  switchTab('history');
+}
+
+function setRecurFreq(days) {
+  _recurringFreq = days;
+  // Re-render just the freq buttons
+  document.querySelectorAll('.recur-freq-btn').forEach(btn => {
+    const d = parseInt(btn.textContent === 'Weekly' ? 7 : btn.textContent === 'Bi-weekly' ? 14 : btn.textContent === 'Monthly' ? 30 : 91);
+    // simpler: just re-render
+  });
+  renderAdd(editModeExpense);
+}
+
+function toggleRecurring() {
+  _recurringEnabled = !_recurringEnabled;
+  const btn = $('recurToggleBtn');
+  const opt = $('recurOptions');
+  if (btn) {
+    btn.style.background = _recurringEnabled ? ROSE : '#374151';
+    btn.querySelector('span').style.transform = `translateX(${_recurringEnabled ? '20px' : '4px'})`;
+  }
+  if (opt) opt.classList.toggle('hidden', !_recurringEnabled);
+}
+
+function updateLabel(labelId) {
+  const label = $(labelId);
+  if (!label) return;
+  const inputId = labelId.replace('Label','Input');
+  const input   = $(inputId);
+  if (!input) return;
+  const hasVal  = input.value && input.value.trim() !== '';
+  label.classList.toggle('active', hasVal);
+  input.classList.toggle('has-value', hasVal);
+}
+
+function updateBottomNavNormal() {
+  const nav = $('bottomNav');
+  if (nav) nav.style.display = '';
+}
+
+/* ════════════════════════════════════════════════════════════
+   HISTORY
+════════════════════════════════════════════════════════════ */
+function renderHistory() {
+  const data  = loadData();
+  let exps    = getFilteredExpenses(data.expenses || []);
+
+  // Apply search / category filters
+  if (historyFilters.category) {
+    exps = exps.filter(e => e.category === historyFilters.category);
+  }
+  if (historyFilters.search) {
+    const q = historyFilters.search.toLowerCase();
+    exps = exps.filter(e =>
+      (e.merchant||'').toLowerCase().includes(q) ||
+      (e.notes||'').toLowerCase().includes(q) ||
+      (e.category||'').toLowerCase().includes(q)
+    );
+  }
+
+  // Sort
+  if (historySort.direction === 'desc') {
+    exps = [...exps].sort((a,b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+  } else {
+    exps = [...exps].sort((a,b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt);
+  }
+
+  allExpenses = exps;
+
+  // Group by month
+  const months = {};
+  exps.forEach(e => {
+    const m = e.date ? e.date.slice(0,7) : '0000-00';
+    if (!months[m]) months[m] = [];
+    months[m].push(e);
+  });
+
+  const monthKeys  = Object.keys(months).sort().reverse();
+  const showMonths = monthKeys.slice(0, loadedMonths);
+
+  const cats = data.categories || [];
+
+  let html = `
+    <div class="px-4 pt-3 pb-2 sticky top-0 z-10 bg-gray-950/95 backdrop-blur-sm">
+      <div class="flex gap-2 mb-2">
+        <input id="historySearch" type="search" placeholder="Search merchant…"
+          value="${historyFilters.search || ''}"
+          oninput="historyFilters.search=this.value; renderHistory()"
+          class="flex-1 px-3 py-2 rounded-xl text-sm bg-gray-800 border border-gray-700 text-gray-100 placeholder-gray-500"
+          style="font-family:'Space Mono',monospace" />
+        <button onclick="showHistoryFilter()" class="px-3 py-2 rounded-xl text-xs border"
+          style="background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);color:#94a3b8;font-family:'Space Mono',monospace;white-space:nowrap">
+          ${historyFilters.category ? catChipHtml(historyFilters.category) : 'Filter'}
+        </button>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-xs text-gray-600">${exps.filter(e=>!e.deleted).length} expense${exps.filter(e=>!e.deleted).length===1?'':'s'}</span>
+        <button onclick="showDeleted=!showDeleted;renderHistory()" class="text-xs"
+          style="color:${showDeleted ? '#fda4af' : '#64748b'};font-family:'Space Mono',monospace">
+          ${showDeleted ? '● showing deleted' : 'show deleted'}
+        </button>
+      </div>
+    </div>
+    <div id="historyList" class="px-4 pb-4">`;
+
+  if (exps.length === 0) {
+    html += `<div class="text-center py-12">
+      <div class="text-3xl mb-2">🧾</div>
+      <div class="text-sm text-gray-500">No expenses for this period.</div>
+      <button onclick="switchTab('add')" class="mt-4 px-4 py-2 rounded-xl text-xs font-bold text-white" style="background:${ROSE};font-family:'Space Mono',monospace">Log one now</button>
+    </div>`;
+  } else {
+    showMonths.forEach(mk => {
+      const mExps = months[mk];
+      const mTotal = mExps.filter(e=>!e.deleted).reduce((s,e) => s+(parseFloat(e.amount)||0), 0);
+      const [yr, mo] = mk.split('-');
+      const mLabel   = new Date(parseInt(yr), parseInt(mo)-1, 1).toLocaleDateString('en-US', { month:'long', year:'numeric' });
+      html += `
+        <div class="sticky top-16 z-10 flex justify-between items-center py-2 mb-1"
+          style="background:rgba(15,23,42,0.97);backdrop-filter:blur(8px);margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px;border-bottom:1px solid rgba(255,255,255,0.05)">
+          <span class="text-xs font-bold text-gray-400 uppercase" style="letter-spacing:0.08em">${mLabel}</span>
+          <span class="text-sm font-bold" style="color:#fda4af">${money(mTotal)}</span>
+        </div>`;
+      mExps.forEach(e => {
+        const cat  = cats.find(c => c.key === e.category) || { color: '#64748B', label: e.category };
+        const chip = catChipHtml(e.category);
+        const d    = new Date(e.date + 'T12:00:00');
+        const dStr = d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+        html += `
+          <div class="expense-card ${e.deleted ? 'deleted' : ''}" onclick="showExpenseDetail('${e.id}',${e.createdAt})">
+            <div style="width:10px;height:10px;border-radius:50%;background:${cat.color};flex-shrink:0"></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-0.5">
+                <span class="text-sm font-bold text-gray-100 truncate">${e.merchant || cat.label}</span>
+                ${e.recurring ? `<svg class="w-3 h-3 text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>` : ''}
+              </div>
+              <div class="flex items-center gap-2">
+                ${chip}
+                <span class="text-xs text-gray-500">${dStr}</span>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <div class="font-bold" style="color:#f1f5f9">${money(e.amount)}</div>
+            </div>
+          </div>`;
+      });
+    });
+
+    if (monthKeys.length > loadedMonths) {
+      html += `<div id="loadMoreBtn" class="text-center py-4">
+        <button onclick="loadMoreHistory()" class="px-5 py-2 rounded-xl text-xs text-gray-400 border border-gray-700"
+          style="font-family:'Space Mono',monospace">Load more</button>
+      </div>`;
+    }
+  }
+
+  html += '</div>';
+  $('app').innerHTML = html;
+  updateBannerTotal();
+}
+
+function loadMoreHistory() {
+  loadedMonths += 2;
+  isScrollLoad = true;
+  renderHistory();
+  isScrollLoad = false;
+}
+
+function showHistoryFilter() {
+  const data = loadData();
+  const cats = data.categories || [];
+  $('sheet').innerHTML = `
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-sm font-bold text-gray-200" style="font-family:'Space Mono',monospace">Filter by Category</span>
+        <button onclick="closeSheet()" style="color:#64748b;font-size:18px;background:none;border:none;cursor:pointer">×</button>
+      </div>
+      <button onclick="historyFilters.category='';renderHistory();closeSheet()"
+        class="w-full text-left px-3 py-2.5 rounded-xl mb-1.5 text-sm ${!historyFilters.category ? 'text-white' : 'text-gray-400'}"
+        style="background:${!historyFilters.category ? `rgba(244,63,94,0.15)` : 'rgba(255,255,255,0.04)'};border:1px solid ${!historyFilters.category ? 'rgba(244,63,94,0.35)' : 'rgba(255,255,255,0.07)'};font-family:'Space Mono',monospace">
+        All Categories
+      </button>
+      ${cats.map(c => `
+        <button onclick="historyFilters.category='${c.key}';renderHistory();closeSheet()"
+          class="w-full text-left px-3 py-2.5 rounded-xl mb-1.5 text-sm flex items-center gap-2"
+          style="background:${historyFilters.category===c.key ? `${hexToRgba(c.color,0.15)}` : 'rgba(255,255,255,0.04)'};border:1px solid ${historyFilters.category===c.key ? `${hexToRgba(c.color,0.35)}` : 'rgba(255,255,255,0.07)'};color:${historyFilters.category===c.key ? c.color : '#94a3b8'};font-family:'Space Mono',monospace">
+          <span style="width:8px;height:8px;border-radius:50%;background:${c.color};flex-shrink:0"></span>
+          ${c.label}
+        </button>`).join('')}
+    </div>`;
+  openSheet();
+}
+
+function showExpenseDetail(id, createdAt) {
+  const data = loadData();
+  const e    = data.expenses.find(x => x.id === id && x.createdAt === createdAt);
+  if (!e) return;
+  const cat  = (data.categories||[]).find(c => c.key === e.category) || { label: e.category, color: '#64748B' };
+  const d    = new Date(e.date + 'T12:00:00').toLocaleDateString('en-US', { weekday:'short', month:'long', day:'numeric', year:'numeric' });
+
+  $('sheet').innerHTML = `
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-sm font-bold text-gray-200" style="font-family:'Space Mono',monospace">Expense Detail</span>
+        <button onclick="closeSheet()" style="color:#64748b;font-size:18px;background:none;border:none;cursor:pointer">×</button>
+      </div>
+      <div class="rounded-xl p-4 mb-4" style="background:${hexToRgba(cat.color,0.08)};border:1px solid ${hexToRgba(cat.color,0.2)}">
+        <div class="text-3xl font-bold mb-1" style="color:#f8fafc;font-family:'Space Mono',monospace">${money(e.amount)}</div>
+        <div class="text-sm font-bold mb-1">${e.merchant || cat.label}</div>
+        <div class="flex items-center gap-2 flex-wrap">
+          ${catChipHtml(e.category)}
+          <span class="text-xs text-gray-500">${d}</span>
+          ${e.recurring ? `<span class="text-xs text-gray-500">↻ Recurring</span>` : ''}
+        </div>
+        ${e.notes ? `<div class="mt-2 text-xs text-gray-400">${e.notes}</div>` : ''}
+      </div>
+      ${e.deleted ? `
+        <button onclick="restoreExpense('${e.id}',${e.createdAt})" class="w-full py-3 rounded-xl text-sm font-bold text-white mb-2"
+          style="background:#10B981;font-family:'Space Mono',monospace">Restore</button>` : `
+        <button onclick="startEditExpense('${e.id}',${e.createdAt})" class="w-full py-3 rounded-xl text-sm font-bold text-white mb-2"
+          style="background:${ROSE};font-family:'Space Mono',monospace">Edit</button>
+        <button onclick="deleteExpense('${e.id}',${e.createdAt})" class="w-full py-3 rounded-xl text-sm font-bold text-gray-400 mb-2"
+          style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);font-family:'Space Mono',monospace">Delete</button>`}
+      <button onclick="closeSheet()" class="w-full py-3 rounded-xl text-sm text-gray-500"
+        style="font-family:'Space Mono',monospace">Close</button>
+    </div>`;
+  openSheet();
+}
+
+function startEditExpense(id, createdAt) {
+  const data = loadData();
+  const e    = data.expenses.find(x => x.id === id && x.createdAt === createdAt);
+  if (!e) return;
+  editModeExpense = e;
+  closeSheet();
+  switchTab('add');
+}
+
+function deleteExpense(id, createdAt) {
+  const data = loadData();
+  const idx  = data.expenses.findIndex(x => x.id === id && x.createdAt === createdAt);
+  if (idx >= 0) {
+    data.expenses[idx].deleted   = true;
+    data.expenses[idx].updatedAt = Date.now();
+    saveData(data);
+    showToast('Expense deleted');
+  }
+  closeSheet();
+  renderHistory();
+}
+
+function restoreExpense(id, createdAt) {
+  const data = loadData();
+  const idx  = data.expenses.findIndex(x => x.id === id && x.createdAt === createdAt);
+  if (idx >= 0) {
+    data.expenses[idx].deleted   = false;
+    data.expenses[idx].updatedAt = Date.now();
+    saveData(data);
+    showToast('Expense restored');
+  }
+  closeSheet();
+  renderHistory();
+}
+
+/* ════════════════════════════════════════════════════════════
+   DATE FILTER MENU
+════════════════════════════════════════════════════════════ */
+function showDateFilterMenu() {
+  const opts = [
+    { type:'week',        label:'This Week'    },
+    { type:'month',       label:'This Month'   },
+    { type:'past3months', label:'Last 3 Months' },
+    { type:'ytd',         label:'Year to Date' },
+    { type:'all',         label:'All Time'     },
+    { type:'range',       label:'Custom Range' },
+  ];
+
+  $('sheet').innerHTML = `
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-sm font-bold text-gray-200" style="font-family:'Space Mono',monospace">Date Range</span>
+        <button onclick="closeSheet()" style="color:#64748b;font-size:18px;background:none;border:none;cursor:pointer">×</button>
+      </div>
+      ${opts.map(o => {
+        const active = dateFilter.type === o.type;
+        return `<button onclick="${o.type==='range' ? 'showCustomRange()' : `setDateFilter('${o.type}',null,null,'${o.label}')`}"
+          class="w-full text-left px-4 py-3 rounded-xl mb-2 text-sm"
+          style="background:${active ? `rgba(244,63,94,0.15)` : 'rgba(255,255,255,0.04)'};border:1px solid ${active ? 'rgba(244,63,94,0.35)' : 'rgba(255,255,255,0.07)'};color:${active ? '#fda4af' : '#94a3b8'};font-family:'Space Mono',monospace">
+          ${o.label}${active ? ' ✓' : ''}
+        </button>`;
+      }).join('')}
+    </div>`;
+  openSheet();
+}
+
+function showCustomRange() {
+  $('sheet').innerHTML = `
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-sm font-bold text-gray-200" style="font-family:'Space Mono',monospace">Custom Date Range</span>
+        <button onclick="closeSheet()" style="color:#64748b;font-size:18px;background:none;border:none;cursor:pointer">×</button>
+      </div>
+      <div class="space-y-3 mb-4">
+        <div>
+          <label class="text-xs text-gray-500 block mb-1">From</label>
+          <input id="rangeStart" type="date" value="${dateFilter.startDate || ''}"
+            class="w-full px-3 py-2 rounded-xl text-sm bg-gray-800 border border-gray-700 text-gray-100"
+            style="font-family:'Space Mono',monospace" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 block mb-1">To</label>
+          <input id="rangeEnd" type="date" value="${dateFilter.endDate || ''}"
+            class="w-full px-3 py-2 rounded-xl text-sm bg-gray-800 border border-gray-700 text-gray-100"
+            style="font-family:'Space Mono',monospace" />
+        </div>
+      </div>
+      <button onclick="applyCustomRange()"
+        class="w-full py-3 rounded-xl text-sm font-bold text-white"
+        style="background:${ROSE};font-family:'Space Mono',monospace">Apply</button>
+    </div>`;
+}
+
+function applyCustomRange() {
+  const s = $('rangeStart')?.value;
+  const e = $('rangeEnd')?.value;
+  if (!s || !e) { showToast('Pick both dates'); return; }
+  setDateFilter('range', s, e, `${s} → ${e}`);
+}
+
+/* ════════════════════════════════════════════════════════════
+   SETTINGS
+════════════════════════════════════════════════════════════ */
+function renderSettings() {
+  const data  = loadData();
+  const cats  = data.categories  || [];
+  const bills = data.recurringBills || [];
+
+  const totalSpent = (data.expenses||[]).filter(e=>!e.deleted).reduce((s,e) => s+(parseFloat(e.amount)||0), 0);
+  const expCount   = (data.expenses||[]).filter(e=>!e.deleted).length;
+
+  $('app').innerHTML = `
+    <div class="px-4 py-4 space-y-5">
+
+      <!-- Stats summary -->
+      <div class="rounded-xl p-4" style="background:rgba(244,63,94,0.06);border:1px solid rgba(244,63,94,0.15)">
+        <div class="text-xs text-gray-500 uppercase tracking-widest mb-2" style="font-family:'Space Mono',monospace;letter-spacing:0.1em">LocaLoss</div>
+        <div class="flex gap-4">
+          <div><div class="text-xs text-gray-500">Total Expenses</div><div class="text-sm font-bold text-gray-200">${money(totalSpent)}</div></div>
+          <div><div class="text-xs text-gray-500">Entries</div><div class="text-sm font-bold text-gray-200">${expCount}</div></div>
+          <div><div class="text-xs text-gray-500">Categories</div><div class="text-sm font-bold text-gray-200">${cats.length}</div></div>
+        </div>
+      </div>
+
+      <!-- Categories -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-xs text-gray-500 uppercase tracking-widest" style="font-family:'Space Mono',monospace;letter-spacing:0.1em">Categories</div>
+          <button onclick="showAddCategory()" class="text-xs font-bold px-3 py-1.5 rounded-lg"
+            style="background:rgba(244,63,94,0.15);color:#fda4af;border:1px solid rgba(244,63,94,0.25);font-family:'Space Mono',monospace">+ Add</button>
+        </div>
+        ${cats.map((c,i) => `
+          <div class="settings-row">
+            <div style="width:12px;height:12px;border-radius:50%;background:${c.color};flex-shrink:0"></div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm text-gray-200 truncate">${c.label}</div>
+              ${c.budget > 0 ? `<div class="text-xs text-gray-500">Budget: ${money(c.budget)}/mo</div>` : '<div class="text-xs text-gray-600">No budget</div>'}
+            </div>
+            <button onclick="showEditCategory(${i})" class="text-xs text-gray-400 px-2 py-1 rounded"
+              style="background:rgba(255,255,255,0.06);font-family:'Space Mono',monospace">Edit</button>
+          </div>`).join('')}
+      </div>
+
+      <!-- Recurring Bills -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-xs text-gray-500 uppercase tracking-widest" style="font-family:'Space Mono',monospace;letter-spacing:0.1em">Recurring Bills</div>
+          <button onclick="showAddBill()" class="text-xs font-bold px-3 py-1.5 rounded-lg"
+            style="background:rgba(244,63,94,0.15);color:#fda4af;border:1px solid rgba(244,63,94,0.25);font-family:'Space Mono',monospace">+ Add</button>
+        </div>
+        ${bills.length === 0 ? `<div class="text-xs text-gray-600 py-2">No recurring bills added yet.</div>` : ''}
+        ${bills.map((b,i) => {
+          const cat = cats.find(c => c.key === b.category) || { color: '#64748B' };
+          return `
+          <div class="settings-row">
+            <div style="width:10px;height:10px;border-radius:50%;background:${cat.color};flex-shrink:0"></div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm text-gray-200 truncate">${b.label}</div>
+              <div class="text-xs text-gray-500">Due day ${b.dueDay} · ${money(b.amount)}</div>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="toggleBill(${i})" class="text-xs px-2 py-1 rounded"
+                style="background:${b.active!==false ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)'};color:${b.active!==false ? '#34d399' : '#64748b'};font-family:'Space Mono',monospace">
+                ${b.active!==false ? 'Active' : 'Paused'}
+              </button>
+              <button onclick="showEditBill(${i})" class="text-xs text-gray-400 px-2 py-1 rounded"
+                style="background:rgba(255,255,255,0.06);font-family:'Space Mono',monospace">Edit</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <!-- Export / Import -->
+      <div>
+        <div class="text-xs text-gray-500 uppercase tracking-widest mb-2" style="font-family:'Space Mono',monospace;letter-spacing:0.1em">Data</div>
+        <button onclick="exportData()" class="settings-row w-full text-left">
+          <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          <div><div class="text-sm text-gray-200">Export</div><div class="text-xs text-gray-500">Copy or share your data as JSON</div></div>
+        </button>
+        <button onclick="showImport()" class="settings-row w-full text-left">
+          <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          <div><div class="text-sm text-gray-200">Import</div><div class="text-xs text-gray-500">Restore from a JSON backup</div></div>
+        </button>
+        <button onclick="confirmClearAll()" class="settings-row w-full text-left">
+          <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          <div><div class="text-sm text-red-400">Clear All Data</div><div class="text-xs text-gray-500">Permanently delete all expenses</div></div>
+        </button>
+      </div>
+
+      <!-- LocaLabor link -->
+      <div>
+        <div class="text-xs text-gray-500 uppercase tracking-widest mb-2" style="font-family:'Space Mono',monospace;letter-spacing:0.1em">Suite</div>
+        <button onclick="window.location.href='../LocaLabor/'" class="settings-row w-full text-left">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="#6366F1" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+          <div><div class="text-sm text-gray-200">LocaLabor</div><div class="text-xs text-gray-500">Income tracker — linked suite app</div></div>
+          <svg class="w-4 h-4 text-gray-600 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+
+      <div class="text-center text-xs text-gray-700 py-2" style="font-family:'Space Mono',monospace">
+        LocaLoss v${APP_VERSION} · LocaLedger Suite
+      </div>
+
+    </div>`;
+
+  updateBannerTotal();
+}
+
+/* ── Category CRUD ───────────────────────────────────────── */
+function showAddCategory() {
+  _openCategorySheet(-1, { key: '', label: '', color: ROSE, budget: 0 });
+}
+function showEditCategory(idx) {
+  const cats = loadData().categories || [];
+  _openCategorySheet(idx, cats[idx] || {});
+}
+
+function _openCategorySheet(idx, cat) {
+  $('sheet').innerHTML = `
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-sm font-bold text-gray-200" style="font-family:'Space Mono',monospace">${idx < 0 ? 'Add Category' : 'Edit Category'}</span>
+        <button onclick="closeSheet()" style="color:#64748b;font-size:18px;background:none;border:none;cursor:pointer">×</button>
+      </div>
+      <div class="space-y-3 mb-4">
+        <div>
+          <label class="text-xs text-gray-500 block mb-1">Label</label>
+          <input id="catLabel" type="text" value="${cat.label || ''}" placeholder="e.g. Groceries"
+            class="w-full px-3 py-2 rounded-xl text-sm bg-gray-800 border border-gray-700 text-gray-100"
+            style="font-family:'Space Mono',monospace" maxlength="24" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 block mb-1">Monthly Budget (0 = none)</label>
+          <input id="catBudget" type="number" value="${cat.budget || 0}" min="0" step="1"
+            class="w-full px-3 py-2 rounded-xl text-sm bg-gray-800 border border-gray-700 text-gray-100"
+            style="font-family:'Space Mono',monospace" />
+        </div>
+        <div class="flex items-center gap-3">
+          <label class="text-xs text-gray-500">Color</label>
+          <input id="catColor" type="color" value="${cat.color || ROSE}" />
+          <span id="catColorPreview" class="text-xs" style="color:${cat.color || ROSE};font-family:'Space Mono',monospace">${cat.color || ROSE}</span>
+        </div>
+      </div>
+      <button onclick="saveCategoryFromSheet(${idx})"
+        class="w-full py-3 rounded-xl text-sm font-bold text-white mb-2"
+        style="background:${ROSE};font-family:'Space Mono',monospace">${idx < 0 ? 'Add Category' : 'Save'}</button>
+      ${idx >= 0 ? `<button onclick="deleteCategory(${idx})"
+        class="w-full py-3 rounded-xl text-sm font-bold text-red-400"
+        style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);font-family:'Space Mono',monospace">Delete Category</button>` : ''}
+    </div>`;
+  document.getElementById('catColor').addEventListener('input', function() {
+    document.getElementById('catColorPreview').textContent = this.value;
+    document.getElementById('catColorPreview').style.color = this.value;
+  });
+  openSheet();
+}
+
+function saveCategoryFromSheet(idx) {
+  const label  = $('catLabel')?.value.trim();
+  const color  = $('catColor')?.value || ROSE;
+  const budget = parseFloat($('catBudget')?.value) || 0;
+  if (!label) { showToast('Enter a label'); return; }
+  const data = loadData();
+  if (!data.categories) data.categories = [];
+  if (idx < 0) {
+    const key = 'cat_' + label.toLowerCase().replace(/[^a-z0-9]/g,'_') + '_' + Date.now();
+    data.categories.push({ key, label, color, budget });
+  } else {
+    data.categories[idx] = { ...data.categories[idx], label, color, budget };
+  }
+  saveData(data);
+  closeSheet();
+  renderSettings();
+  showToast(idx < 0 ? 'Category added' : 'Category saved');
+}
+
+function deleteCategory(idx) {
+  if (!confirm('Delete this category? Existing expenses will keep the category key.')) return;
+  const data = loadData();
+  data.categories.splice(idx, 1);
+  saveData(data);
+  closeSheet();
+  renderSettings();
+  showToast('Category deleted');
+}
+
+/* ── Recurring Bill CRUD ─────────────────────────────────── */
+function showAddBill() { _openBillSheet(-1, { label:'', amount:0, dueDay:1, category:'', active:true }); }
+function showEditBill(idx) {
+  const bills = loadData().recurringBills || [];
+  _openBillSheet(idx, bills[idx] || {});
+}
+
+function _openBillSheet(idx, bill) {
+  const cats = loadData().categories || [];
+  const catOpts = cats.map(c =>
+    `<option value="${c.key}" ${bill.category===c.key?'selected':''}>${c.label}</option>`
+  ).join('');
+
+  $('sheet').innerHTML = `
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-sm font-bold text-gray-200" style="font-family:'Space Mono',monospace">${idx<0?'Add Recurring Bill':'Edit Bill'}</span>
+        <button onclick="closeSheet()" style="color:#64748b;font-size:18px;background:none;border:none;cursor:pointer">×</button>
+      </div>
+      <div class="space-y-3 mb-4">
+        <div>
+          <label class="text-xs text-gray-500 block mb-1">Label</label>
+          <input id="billLabel" type="text" value="${bill.label||''}" placeholder="e.g. Netflix"
+            class="w-full px-3 py-2 rounded-xl text-sm bg-gray-800 border border-gray-700 text-gray-100"
+            style="font-family:'Space Mono',monospace" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 block mb-1">Amount ($)</label>
+          <input id="billAmount" type="number" value="${bill.amount||''}" min="0" step="0.01"
+            class="w-full px-3 py-2 rounded-xl text-sm bg-gray-800 border border-gray-700 text-gray-100"
+            style="font-family:'Space Mono',monospace" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 block mb-1">Due Day of Month (1–31)</label>
+          <input id="billDueDay" type="number" value="${bill.dueDay||1}" min="1" max="31"
+            class="w-full px-3 py-2 rounded-xl text-sm bg-gray-800 border border-gray-700 text-gray-100"
+            style="font-family:'Space Mono',monospace" />
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 block mb-1">Category</label>
+          <select id="billCategory" class="w-full px-3 py-2 rounded-xl text-sm bg-gray-800 border border-gray-700 text-gray-100"
+            style="font-family:'Space Mono',monospace">
+            ${catOpts}
+          </select>
+        </div>
+      </div>
+      <button onclick="saveBillFromSheet(${idx})"
+        class="w-full py-3 rounded-xl text-sm font-bold text-white mb-2"
+        style="background:${ROSE};font-family:'Space Mono',monospace">${idx<0?'Add Bill':'Save'}</button>
+      ${idx>=0 ? `<button onclick="deleteBill(${idx})"
+        class="w-full py-3 rounded-xl text-sm font-bold text-red-400"
+        style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);font-family:'Space Mono',monospace">Delete Bill</button>` : ''}
+    </div>`;
+  openSheet();
+}
+
+function saveBillFromSheet(idx) {
+  const label    = $('billLabel')?.value.trim();
+  const amount   = parseFloat($('billAmount')?.value) || 0;
+  const dueDay   = parseInt($('billDueDay')?.value) || 1;
+  const category = $('billCategory')?.value || '';
+  if (!label) { showToast('Enter a label'); return; }
+  const data = loadData();
+  if (!data.recurringBills) data.recurringBills = [];
+  if (idx < 0) {
+    data.recurringBills.push({ id: generateId(), label, amount, dueDay, category, active: true });
+  } else {
+    data.recurringBills[idx] = { ...data.recurringBills[idx], label, amount, dueDay, category };
+  }
+  saveData(data);
+  closeSheet();
+  renderSettings();
+  showToast(idx < 0 ? 'Bill added' : 'Bill saved');
+}
+
+function toggleBill(idx) {
+  const data = loadData();
+  const bill = data.recurringBills?.[idx];
+  if (!bill) return;
+  bill.active = bill.active === false ? true : false;
+  saveData(data);
+  renderSettings();
+}
+
+function deleteBill(idx) {
+  if (!confirm('Remove this recurring bill?')) return;
+  const data = loadData();
+  data.recurringBills.splice(idx, 1);
+  saveData(data);
+  closeSheet();
+  renderSettings();
+  showToast('Bill removed');
+}
+
+/* ── Export / Import ─────────────────────────────────────── */
+function exportData() {
+  const data = loadData();
+  const json = JSON.stringify(data, null, 2);
+  if (navigator.share) {
+    navigator.share({ title: 'LocaLoss Backup', text: json }).catch(() => _copyExport(json));
+  } else {
+    _copyExport(json);
+  }
+}
+
+function _copyExport(text) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard')).catch(() => _fallbackCopy(text));
+  } else {
+    _fallbackCopy(text);
+  }
+}
+
+function _fallbackCopy(text) {
+  $('sheet').innerHTML = `
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-sm font-bold text-gray-200" style="font-family:'Space Mono',monospace">Export Data</span>
+        <button onclick="closeSheet()" style="color:#64748b;font-size:18px;background:none;border:none;cursor:pointer">×</button>
+      </div>
+      <textarea class="w-full h-48 p-3 text-xs rounded-xl bg-gray-800 border border-gray-700 text-gray-300"
+        style="font-family:'Space Mono',monospace" readonly>${text}</textarea>
+      <p class="text-xs text-gray-500 mt-2">Select all and copy this JSON to back up your data.</p>
+    </div>`;
+  openSheet();
+}
+
+function showImport() {
+  $('sheet').innerHTML = `
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-sm font-bold text-gray-200" style="font-family:'Space Mono',monospace">Import Data</span>
+        <button onclick="closeSheet()" style="color:#64748b;font-size:18px;background:none;border:none;cursor:pointer">×</button>
+      </div>
+      <p class="text-xs text-gray-400 mb-3">Paste a LocaLoss JSON backup. Imported expenses will be merged (no duplicates by ID).</p>
+      <textarea id="importArea" class="w-full h-40 p-3 text-xs rounded-xl bg-gray-800 border border-gray-700 text-gray-300 mb-3"
+        style="font-family:'Space Mono',monospace" placeholder='{"expenses":[...]}'></textarea>
+      <button onclick="importData()"
+        class="w-full py-3 rounded-xl text-sm font-bold text-white"
+        style="background:${ROSE};font-family:'Space Mono',monospace">Import</button>
+    </div>`;
+  openSheet();
+}
+
+function importData() {
+  try {
+    const raw     = $('importArea')?.value;
+    const parsed  = JSON.parse(raw);
+    const current = loadData();
+
+    // Merge expenses (no dup IDs)
+    const existingIds = new Set((current.expenses||[]).map(e => e.id));
+    const newExps     = (parsed.expenses||[]).filter(e => !existingIds.has(e.id));
+    current.expenses  = [...(current.expenses||[]), ...newExps];
+
+    // Merge categories (no dup keys)
+    if (parsed.categories?.length) {
+      const existingKeys = new Set((current.categories||[]).map(c => c.key));
+      const newCats      = parsed.categories.filter(c => !existingKeys.has(c.key));
+      current.categories = [...(current.categories||[]), ...newCats];
+    }
+
+    // Advance nextId
+    const allIds = current.expenses.map(e => {
+      const parts = e.id?.split('_');
+      return parts ? parseInt(parts[parts.length-1]) : 0;
+    }).filter(n => !isNaN(n));
+    if (allIds.length) {
+      const m = loadMeta();
+      m.nextId = Math.max(m.nextId, Math.max(...allIds) + 1);
+      saveMeta(m);
+    }
+
+    saveData(current);
+    closeSheet();
+    showToast(`Imported ${newExps.length} expense${newExps.length===1?'':'s'}`);
+    renderSettings();
+  } catch(err) {
+    showToast('Invalid JSON — check your backup');
+  }
+}
+
+function confirmClearAll() {
+  if (!confirm('Delete ALL expenses and reset categories? This cannot be undone.')) return;
+  if (!confirm('Are you sure? All local data will be permanently deleted.')) return;
+  localStorage.removeItem(DATA_KEY);
+  localStorage.removeItem(META_KEY);
+  initStorage();
+  closeSheet();
+  showToast('All data cleared');
+  switchTab('dashboard');
+}
+
+/* ════════════════════════════════════════════════════════════
+   SUITE LAUNCHER & DRUM
+════════════════════════════════════════════════════════════ */
+const SUITE_MODULES = [
+  { id:'labor',   label:'Labor',   color:'#6366F1', desc:'Income Tracking'    },
+  { id:'loss',    label:'Loss',    color:'#F43F5E', desc:'Spending Tracker'   },
+  { id:'limit',   label:'Limit',   color:'#F59E0B', desc:'Budget Intelligence'},
+  { id:'loan',    label:'Loan',    color:'#F97316', desc:'Loan Optimizer'     },
+  { id:'legacy',  label:'Legacy',  color:'#10B981', desc:'Investment Tracker' },
+  { id:'liquid',  label:'Liquid',  color:'#06B6D4', desc:'Net Worth Engine'   },
+];
+
+const DRUM_FACE_H  = 44;
+let _activeModule  = 'loss';
+let _drumStep      = 1; // start on face 1 (Loss)
+let _drumIdx       = 1;
+let _launcherOpen  = false;
+let _drumHovering  = false;
+let _drumInterval  = null;
+let _drumResetTimer = null;
+
+function initSuiteDrum() {
+  _applyFaceColors();
+  const drum = $('suiteDrum');
+  if (drum) {
+    drum.style.transition = 'none';
+    drum.style.transform  = `translateY(-${_drumIdx * DRUM_FACE_H}px)`;
+    requestAnimationFrame(() => { if (drum) drum.style.transition = ''; });
+  }
+
+  const btn = $('suiteLaunchBtn');
+  if (btn) {
+    btn.addEventListener('mouseenter', () => { _drumHovering = true;  _startDrum(); });
+    btn.addEventListener('mouseleave', () => { _drumHovering = false; if (!_launcherOpen) { _stopDrum(); _settleDrum(); } });
+  }
+}
+
+function _applyFaceColors() {
+  document.querySelectorAll('.suite-face').forEach((el, i) => {
+    el.style.color = SUITE_MODULES[i % 6].color;
+  });
+}
+
+function _settleDrum() {
+  if (_drumResetTimer) { clearTimeout(_drumResetTimer); _drumResetTimer = null; }
+  const faceIdx = SUITE_MODULES.findIndex(m => m.id === _activeModule);
+  if (faceIdx < 0) return;
+  const drum = $('suiteDrum');
+  if (!drum) return;
+  drum.style.transition = 'none';
+  _drumStep = faceIdx; _drumIdx = faceIdx;
+  drum.style.transform = `translateY(-${faceIdx * DRUM_FACE_H}px)`;
+  requestAnimationFrame(() => { if (drum) drum.style.transition = ''; });
+}
+
+function _startDrum() { if (!_drumInterval) _drumInterval = setInterval(_drumAdvance, 3200); }
+function _stopDrum()  { clearInterval(_drumInterval); _drumInterval = null; }
+
+function _drumAdvance() {
+  _drumStep++;
+  _drumIdx = _drumStep % 6;
+  const drum = $('suiteDrum');
+  if (!drum) return;
+  drum.style.transition = '';
+  if (_drumStep % 6 === 0 && _drumStep > 0) {
+    drum.style.transform = `translateY(-${_drumStep * DRUM_FACE_H}px)`;
+    setTimeout(() => {
+      drum.style.transition = 'none';
+      _drumStep = 0; _drumIdx = 0;
+      drum.style.transform = 'translateY(0)';
+      requestAnimationFrame(() => { if (drum) drum.style.transition = ''; });
+    }, 520);
+  } else {
+    drum.style.transform = `translateY(-${_drumStep * DRUM_FACE_H}px)`;
+  }
+}
+
+function toggleSuiteLauncher() {
+  if (_launcherOpen) { closeSuiteLauncher(); return; }
+  _launcherOpen = true;
+  const panel = $('suiteLauncher');
+  if (panel) panel.classList.remove('hidden');
+  const chevron = $('suiteChevron');
+  if (chevron) chevron.style.transform = 'rotate(180deg)';
+  _startDrum();
+  setTimeout(() => {
+    document.addEventListener('click', _outsideClickHandler, { once: true });
+  }, 50);
+}
+
+function closeSuiteLauncher() {
+  _launcherOpen = false;
+  const panel = $('suiteLauncher');
+  if (panel) panel.classList.add('hidden');
+  const chevron = $('suiteChevron');
+  if (chevron) chevron.style.transform = '';
+  if (!_drumHovering) { _stopDrum(); _settleDrum(); }
+}
+
+function _outsideClickHandler(evt) {
+  const panel = $('suiteLauncher');
+  const btn   = $('suiteLaunchBtn');
+  if (panel && !panel.contains(evt.target) && btn && !btn.contains(evt.target)) {
+    closeSuiteLauncher();
+  }
+}
+
+function switchSuiteModule(id) {
+  closeSuiteLauncher();
+  _activeModule = id;
+
+  SUITE_MODULES.forEach(m => {
+    const btn = $(`suiteBtn-${m.id}`);
+    if (btn) btn.classList.toggle('active', m.id === id);
+  });
+
+  const faceIdx = SUITE_MODULES.findIndex(m => m.id === id);
+  if (faceIdx >= 0) {
+    const drum = $('suiteDrum');
+    if (drum) {
+      drum.style.transition = 'transform 0.4s cubic-bezier(0.4,0,0.2,1)';
+      _drumStep = faceIdx; _drumIdx = faceIdx;
+      drum.style.transform = `translateY(-${faceIdx * DRUM_FACE_H}px)`;
+      setTimeout(() => { if (drum) { drum.style.transition = 'none'; requestAnimationFrame(() => { if(drum) drum.style.transition=''; }); } }, 420);
+    }
+  }
+
+  // Live app navigation
+  const APP_URLS = {
+    labor: '../LocaLabor/',
+  };
+
+  if (id === 'loss') {
+    // Already here — just re-render
+    switchTab('dashboard');
+  } else if (APP_URLS[id]) {
+    window.location.href = APP_URLS[id];
+  } else {
+    _showModulePreview(id);
+  }
+}
+
+function _hideForPreview() {
+  const nav    = document.querySelector('#bottomNav');
+  const banner = $('monthlyBanner');
+  if (nav)    nav.style.display    = 'none';
+  if (banner) banner.style.display = 'none';
+}
+
+function _showLossUI() {
+  const nav    = document.querySelector('#bottomNav');
+  const banner = $('monthlyBanner');
+  if (nav)    nav.style.display    = '';
+  if (banner) banner.style.display = '';
+}
+
+function _showModulePreview(id) {
+  _hideForPreview();
+  const app = $('app');
+  if (!app) return;
+  app.style.opacity   = '0';
+  app.style.transform = 'translateY(10px)';
+  app.style.transition = 'opacity 0.2s, transform 0.2s';
+  setTimeout(() => {
+    app.innerHTML       = _buildPreviewPage(id);
+    app.style.opacity   = '1';
+    app.style.transform = 'translateY(0)';
+  }, 120);
+}
+
+function _buildPreviewPage(id) {
+  const pages = {
+    limit: { color:'#F59E0B', colorText:'#fcd34d', title:'LocaLimit', subtitle:'Budget Intelligence',
+      icon:`<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>`,
+      tagline:'Set limits. Break none. Stay in control.',
+      features:[
+        ['Income vs. Spending Dashboard','Compare your LocaLabor earnings against LocaLoss spend in one view.'],
+        ['Budget Envelopes','Allocate monthly budgets by category and track how much you have left.'],
+        ['Savings Rate Tracker','Know exactly what percentage of your income you keep each month.'],
+        ['Self-Employment Tax Modeling','Estimate quarterly tax obligations based on your actual earnings.'],
+        ['Predictive Budget Scenarios','Model "what if" scenarios — raise, cut subscription, pay off debt.'],
+      ]},
+    loan: { color:'#F97316', colorText:'#fdba74', title:'LocaLoan', subtitle:'Loan Payoff Optimizer',
+      icon:`<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="1.8"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>`,
+      tagline:'Find the fastest, cheapest path to zero.',
+      features:[
+        ['Multi-Loan Tracking','Credit cards, auto, student, personal — all in one place.'],
+        ['Snowball vs Avalanche','Model both strategies and see total interest paid for each.'],
+        ['Promo APR Expiry Alerts','Get notified before 0% periods expire and interest spikes.'],
+        ['Extra Payment Modeling','See how $50 extra per month changes your payoff date.'],
+        ['Full Amortization Tables','Every payment, every month, down to the penny.'],
+      ]},
+    legacy: { color:'#10B981', colorText:'#6ee7b7', title:'LocaLegacy', subtitle:'Investment Tracker',
+      icon:`<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="1.8"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
+      tagline:'Track every asset. Know your real net worth.',
+      features:[
+        ['Stocks, ETFs & Crypto','Portfolio tracking with cost basis and unrealized gain/loss.'],
+        ['Alternative Assets','Vehicles, art, real estate, collectibles — anything with value.'],
+        ['CAGR Per Position','Year-over-year growth rate for every holding.'],
+        ['Dividend Tracker','Log distributions and project annual income from holdings.'],
+        ['Tax Lot Tracking','Short vs. long-term gain awareness before you sell.'],
+      ]},
+    liquid: { color:'#06B6D4', colorText:'#67e8f9', title:'LocaLiquid', subtitle:'Net Worth Engine',
+      icon:`<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#06B6D4" stroke-width="1.8"><path d="M12 2c0 0-8 6.5-8 12a8 8 0 0016 0c0-5.5-8-12-8-12z"/></svg>`,
+      tagline:'Your entire financial life in one living number.',
+      features:[
+        ['Real-Time Net Worth','Assets minus liabilities, updated whenever you open the app.'],
+        ['Liquid vs. Illiquid Breakdown','Know how much cash you could access today.'],
+        ['Future Wealth Projections','5, 10, and 25-year projections based on your savings rate.'],
+        ['Retirement Readiness Score','Are you on track? Know now, not at 65.'],
+        ['Milestone Alerts','Celebrate $10k, $50k, $100k net worth milestones.'],
+      ]},
+  };
+  const p = pages[id];
+  if (!p) return `<div class="p-8 text-center text-gray-500">Module not found.</div>`;
+  return `
+    <div class="px-4 py-6 max-w-lg mx-auto">
+      <div class="flex items-center gap-3 mb-4">
+        <div style="width:48px;height:48px;border-radius:14px;background:${hexToRgba(p.color,0.15)};border:1px solid ${hexToRgba(p.color,0.3)};display:flex;align-items:center;justify-content:center;flex-shrink:0">${p.icon}</div>
+        <div>
+          <div class="text-lg font-bold" style="color:#f1f5f9;font-family:'Space Mono',monospace">${p.title}</div>
+          <div class="text-xs" style="color:${p.colorText}">${p.subtitle}</div>
+        </div>
+        <span class="preview-badge preview-pulse ml-auto" style="background:${hexToRgba(p.color,0.15)};color:${p.colorText};border:1px solid ${hexToRgba(p.color,0.3)}">Coming Soon</span>
+      </div>
+      <p class="text-sm text-gray-400 mb-5" style="font-family:'Space Mono',monospace;line-height:1.7">${p.tagline}</p>
+      <div class="rounded-xl p-4 mb-5" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07)">
+        <div class="text-xs text-gray-500 uppercase tracking-widest mb-3" style="font-family:'Space Mono',monospace;letter-spacing:0.1em">Planned Features</div>
+        ${p.features.map(([t,d]) => `
+          <div class="preview-feature-item">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0;margin-top:2px"><circle cx="7" cy="7" r="6" stroke="${p.color}" stroke-width="1.2"/><path d="M4.5 7l2 2 3-3" stroke="${p.color}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div><span style="font-weight:700;color:#e2e8f0">${t}</span> — ${d}</div>
+          </div>`).join('')}
+      </div>
+      <button onclick="switchSuiteModule('loss')"
+        style="width:100%;padding:14px;background:${hexToRgba(ROSE,0.1)};border:1px solid ${hexToRgba(ROSE,0.25)};border-radius:12px;color:#fb7185;font-size:13px;font-family:'Space Mono',monospace;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="#fb7185" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Back to LocaLoss
+      </button>
+    </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════
+   PWA / SERVICE WORKER / VERSION CHECK
+════════════════════════════════════════════════════════════ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            _showUpdateBanner(nw);
+          }
+        });
+      });
+    });
+  });
+}
+
+function _showUpdateBanner(worker) {
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;bottom:calc(5rem + env(safe-area-inset-bottom,0px));left:1rem;right:1rem;z-index:9998;background:#1e293b;border:1px solid rgba(244,63,94,0.4);border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:\'Space Mono\',monospace;font-size:12px;color:#f1f5f9;box-shadow:0 4px 20px rgba(0,0,0,0.5)';
+  banner.innerHTML = `<span style="color:#94a3b8">Update available</span><button id="updateNowBtn" style="background:${ROSE};color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;font-family:\'Space Mono\',monospace;cursor:pointer">Update Now</button>`;
+  document.body.appendChild(banner);
+  banner.querySelector('#updateNowBtn').addEventListener('click', () => {
+    worker.postMessage({ type: 'SKIP_WAITING' });
+    navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
+  });
+}
+
+/* ════════════════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  initSuiteDrum();
+  updateBannerTotal();
+
+  // Tab nav event delegation
+  document.querySelectorAll('.tab[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  switchTab('dashboard');
+});
+</script>
+<script src="onboarding.js" defer></script>
+</body>
+</html>
