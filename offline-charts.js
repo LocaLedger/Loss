@@ -4,7 +4,7 @@
    Reads from global loadData() and dateFilter.
 ================================= */
 
-const ROSE = '#F43F5E';
+// ROSE is declared in index.html — do not redeclare here
 const CHART_COLORS = ['#F43F5E','#F97316','#8B5CF6','#06B6D4','#10B981','#EAB308','#94A3B8'];
 
 function _getLossData() {
