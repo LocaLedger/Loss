@@ -1320,7 +1320,7 @@ function renderSettings() {
       <!-- LocaLabor link -->
       <div>
         <div class="text-xs text-gray-500 uppercase tracking-widest mb-2" style="font-family:'Space Mono',monospace;letter-spacing:0.1em">Suite</div>
-        <button onclick="window.location.href='../LocaLabor/'" class="settings-row w-full text-left">
+        <button onclick="window.location.href='/Labor/'" class="settings-row w-full text-left">
           <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="#6366F1" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
           <div><div class="text-sm text-gray-200">LocaLabor</div><div class="text-xs text-gray-500">Income tracker — linked suite app</div></div>
           <svg class="w-4 h-4 text-gray-600 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
@@ -1736,7 +1736,7 @@ function switchSuiteModule(id) {
 
   // Live app navigation
   const APP_URLS = {
-    labor: '../LocaLabor/',
+    labor: '/Labor/',
   };
 
   if (id === 'loss') {
