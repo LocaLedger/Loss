@@ -20,6 +20,7 @@
   }
 </script>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -745,6 +746,19 @@ function renderAdd(existing) {
       <div class="text-xs text-gray-500 uppercase tracking-widest mb-4" style="font-family:'Space Mono',monospace;letter-spacing:0.1em">
         ${isEdit ? 'Edit Expense' : 'Log Expense'}
       </div>
+
+      <!-- Receipt Scan -->
+      ${!isEdit ? `
+      <button type="button" onclick="triggerReceiptScan()"
+        class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold mb-4"
+        style="background:rgba(244,63,94,0.1);border:1px dashed rgba(244,63,94,0.35);color:#F43F5E;font-family:'Space Mono',monospace;"
+        id="scanReceiptBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        Scan Receipt
+      </button>` : ''}
 
       <form id="expenseForm" onsubmit="saveExpense(event)">
 
@@ -1734,9 +1748,13 @@ function switchSuiteModule(id) {
     }
   }
 
-  // Live app navigation
+  // Live app navigation — add new app paths here as they launch
   const APP_URLS = {
-    labor: '/Labor/',
+    labor:  '/Labor/',
+    loan:   '/Loan/',
+    limit:  '/Limit/?from=loss',
+    legacy: '/Legacy/?from=loss',
+    liquid: '/Liquid/?from=loss',
   };
 
   if (id === 'loss') {
@@ -1877,6 +1895,151 @@ function _showUpdateBanner(worker) {
     worker.postMessage({ type: 'SKIP_WAITING' });
     navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
   });
+}
+
+/* ════════════════════════════════════════════════════════════
+   RECEIPT SCANNING (Tesseract.js offline OCR)
+════════════════════════════════════════════════════════════ */
+
+let _ocrWorker = null;
+let _ocrBusy   = false;
+
+async function _getOcrWorker() {
+  if (_ocrWorker) return _ocrWorker;
+  if (typeof Tesseract === 'undefined') {
+    throw new Error('Tesseract.js not loaded — check network connection for first-time setup.');
+  }
+  _ocrWorker = await Tesseract.createWorker('eng', 1, {
+    // No logger to keep console clean
+  });
+  return _ocrWorker;
+}
+
+/** Parse OCR text → {amount, merchant} best guesses. */
+function _parseReceiptText(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+  // Amount: look for the largest dollar value near total/amount keywords,
+  // falling back to any X.XX pattern.
+  let amount = null;
+  const totalRe  = /(?:total|amount|subtotal|due|charged|sale)\s*[:\-]?\s*\$?\s*(\d{1,5}[.,]\d{2})/i;
+  const dollarRe = /\$\s*(\d{1,5}[.,]\d{2})/;
+  const bareRe   = /\b(\d{1,5}[.,]\d{2})\b/;
+
+  // Prefer a line with "total" keyword
+  for (const line of lines) {
+    const m = line.match(totalRe);
+    if (m) { amount = parseFloat(m[1].replace(',', '.')); break; }
+  }
+  // Fallback: largest dollar-sign value on the receipt
+  if (!amount) {
+    let best = 0;
+    for (const line of lines) {
+      const m = line.match(dollarRe);
+      if (m) { const v = parseFloat(m[1].replace(',', '.')); if (v > best) { best = v; amount = v; } }
+    }
+  }
+  // Last resort: largest bare decimal
+  if (!amount) {
+    let best = 0;
+    for (const line of lines) {
+      const m = line.match(bareRe);
+      if (m) { const v = parseFloat(m[1].replace(',', '.')); if (v > best) { best = v; amount = v; } }
+    }
+  }
+
+  // Merchant: first non-empty line that isn't mostly numbers/symbols
+  let merchant = '';
+  for (const line of lines) {
+    if (/[a-zA-Z]{3,}/.test(line) && !/^\d/.test(line)) {
+      merchant = line.replace(/[^\w\s&'.-]/g, '').trim();
+      if (merchant.length >= 3) break;
+    }
+  }
+
+  return { amount: amount || null, merchant: merchant || '' };
+}
+
+function _showOcrOverlay(show, message) {
+  let overlay = document.getElementById('ocr-overlay');
+  if (!show) { if (overlay) overlay.remove(); return; }
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'ocr-overlay';
+    overlay.style.cssText = `position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,0.88);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      font-family:'Space Mono',monospace;color:#f1f5f9;gap:16px;`;
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = `
+    <div style="width:48px;height:48px;border:3px solid rgba(244,63,94,0.3);border-top-color:#F43F5E;
+      border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+    <div style="font-size:13px;color:#94a3b8;max-width:220px;text-align:center;">${message || 'Scanning receipt…'}</div>`;
+  if (!document.getElementById('ocr-spin-style')) {
+    const s = document.createElement('style');
+    s.id = 'ocr-spin-style';
+    s.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(s);
+  }
+}
+
+function triggerReceiptScan() {
+  if (_ocrBusy) { showToast('Scan already in progress…'); return; }
+  const inp = document.createElement('input');
+  inp.type   = 'file';
+  inp.accept = 'image/*';
+  inp.capture = 'environment'; // prefer rear camera on mobile
+  inp.style.display = 'none';
+  document.body.appendChild(inp);
+  inp.addEventListener('change', async () => {
+    const file = inp.files[0];
+    inp.remove();
+    if (!file) return;
+    await _runOcr(file);
+  });
+  inp.click();
+}
+
+async function _runOcr(file) {
+  _ocrBusy = true;
+  _showOcrOverlay(true, 'Loading OCR engine…');
+  try {
+    const worker = await _getOcrWorker();
+    _showOcrOverlay(true, 'Scanning receipt…');
+    const url = URL.createObjectURL(file);
+    const { data: { text } } = await worker.recognize(url);
+    URL.revokeObjectURL(url);
+    _showOcrOverlay(false);
+
+    const { amount, merchant } = _parseReceiptText(text);
+
+    // Pre-fill the form if on Add tab
+    const amtEl  = document.getElementById('amountInput');
+    const merEl  = document.getElementById('merchantInput');
+    const merLbl = document.getElementById('merchantLabel');
+
+    if (amtEl && amount !== null) {
+      amtEl.value = amount.toFixed(2);
+      amtEl.classList.add('has-value');
+    }
+    if (merEl && merchant) {
+      merEl.value = merchant;
+      merEl.classList.add('has-value');
+      if (merLbl) merLbl.classList.add('active');
+    }
+
+    if (amount || merchant) {
+      showToast(`Receipt parsed${amount ? ' · $' + amount.toFixed(2) : ''}${merchant ? ' · ' + merchant : ''}`);
+    } else {
+      showToast('Couldn\'t read amounts — fill in manually');
+    }
+  } catch (err) {
+    _showOcrOverlay(false);
+    showToast('OCR failed: ' + (err.message || 'unknown error'));
+    console.error('[OCR]', err);
+  } finally {
+    _ocrBusy = false;
+  }
 }
 
 /* ════════════════════════════════════════════════════════════
