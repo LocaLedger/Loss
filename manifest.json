@@ -1,7 +1,8 @@
 {
   "name": "LocaLoss",
   "short_name": "LocaLoss",
-  "start_url": ".",
+  "start_url": "/loss/",
+  "scope": "/loss/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#F43F5E",
